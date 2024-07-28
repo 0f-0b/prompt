@@ -1,0 +1,33 @@
+{
+  "name": "@ud2/prompt",
+  "version": "0.0.0",
+  "exports": {
+    ".": "./mod.ts",
+    "./env/deno": "./env/deno.ts"
+  },
+  "imports": {
+    "@std/cli": "jsr:@std/cli@^1.0.0"
+  },
+  "compilerOptions": {
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
+  },
+  "publish": {
+    "exclude": [
+      ".github",
+      "deno.lock"
+    ]
+  },
+  "lint": {
+    "rules": {
+      "exclude": [
+        "no-invalid-regexp"
+      ]
+    }
+  },
+  "tasks": {
+    "cache": "deno cache examples/repl.ts examples/show_keybinds.ts",
+    "lint": "deno fmt --check && deno lint && deno check --all examples/repl.ts && deno check --all examples/show_keybinds.ts"
+  }
+}

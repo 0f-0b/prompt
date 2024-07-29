@@ -17,6 +17,7 @@ export type Command =
   | "clear-display"
   | "next-history"
   | "previous-history"
+  | "undo"
   | "quoted-insert"
   | "bracketed-paste-begin";
 

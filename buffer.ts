@@ -13,7 +13,8 @@ export interface TextBufferState {
 export class TextBuffer {
   #prompt: string;
   #state: TextBufferState = { text: "", cursor: 0 };
-  #history: readonly string[];
+  readonly #savedStates: TextBufferState[] = [];
+  readonly #history: readonly string[];
   #position: number;
   #stash = "";
 
@@ -37,6 +38,29 @@ export class TextBuffer {
 
   setState(text: string, cursor: number): undefined {
     this.#state = { text, cursor: nextGraphemeBoundary(text, cursor) };
+  }
+
+  saveState(): undefined {
+    this.#savedStates.push(this.#state);
+  }
+
+  restoreState(): undefined {
+    const state = this.#savedStates.pop();
+    if (state) {
+      this.#state = state;
+    }
+  }
+
+  resetState(): undefined {
+    const savedStates = this.#savedStates;
+    if (savedStates.length !== 0) {
+      this.#state = savedStates[0]!;
+      savedStates.length = 0;
+    }
+  }
+
+  clearSavedStates(): undefined {
+    this.#savedStates.length = 0;
   }
 
   get history(): readonly string[] {
@@ -64,6 +88,7 @@ export class TextBuffer {
     } else {
       text = history[to]!;
     }
+    this.clearSavedStates();
     this.setState(text, text.length);
   }
 
@@ -92,6 +117,7 @@ export class TextBuffer {
   }
 
   deleteText(start: number, end: number): undefined {
+    this.saveState();
     this.replaceText(start, end, "");
   }
 

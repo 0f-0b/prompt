@@ -25,10 +25,12 @@ export const defaultCommands: CommandTree = Object.freeze<CommandTree>({
   "\x10" /* ^P */: "previous-history",
   "\x11" /* ^Q */: "quoted-insert",
   "\x16" /* ^V */: "quoted-insert",
+  "\x1f" /* ^_ */: "undo",
   "\x18" /* ^X */: Object.freeze<CommandTree>({
     // @ts-expect-error Remove prototype
     __proto__: null,
     "\x7f" /* ^? */: "cut-to-start",
+    "\x15" /* ^U */: "undo",
   }),
   "\x1b" /* ^[ */: Object.freeze<CommandTree>({
     // @ts-expect-error Remove prototype
@@ -152,6 +154,7 @@ export async function prompt(
           const decoder = new CommandDecoder(commands);
           const buffer = new TextBuffer(prompt, history);
           const renderer = new Renderer();
+          let insertCount = 0;
           let quotedInsert = false;
           let pasteBuffer: string | undefined;
           let action: PromptResult["action"];
@@ -167,14 +170,20 @@ export async function prompt(
               if (pasteBuffer !== undefined) {
                 pasteBuffer += c;
                 if (pasteBuffer.endsWith("\x1b[201~")) {
+                  buffer.saveState();
                   buffer.insertText(pasteBuffer.slice(0, -"\x1b[201~".length));
                   pasteBuffer = undefined;
                 }
                 continue;
               }
               if (quotedInsert || !controlCharacterRE.test(c)) {
+                if (insertCount === 0) {
+                  buffer.saveState();
+                  insertCount = 20;
+                }
                 buffer.insertText(c);
                 quotedInsert = false;
+                insertCount--;
                 continue;
               }
               if (c === "\x04" && buffer.state.text.length === 0) {
@@ -240,14 +249,18 @@ export async function prompt(
                 break;
               case "quoted-insert":
                 quotedInsert = true;
-                break;
+                continue;
               case "bracketed-paste-begin":
                 pasteBuffer = "";
+                break;
+              case "undo":
+                buffer.restoreState();
                 break;
               default:
                 command satisfies null;
                 break;
             }
+            insertCount = 0;
           }
           const { text } = buffer.state;
           buffer.replaceText(text.length, text.length, "\n");

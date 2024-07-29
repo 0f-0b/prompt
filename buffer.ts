@@ -4,12 +4,15 @@ import {
   getPreviousWordRange,
   nextGraphemeBoundary,
 } from "./boundary.ts";
-import { escapeControlCharacters } from "./control.ts";
-import { advanceCursor, wrapCursor } from "./cursor.ts";
+
+export interface TextBufferState {
+  readonly text: string;
+  readonly cursor: number;
+}
 
 export class TextBuffer {
   #prompt: string;
-  #state = { text: "", cursor: 0 };
+  #state: TextBufferState = { text: "", cursor: 0 };
   #history: readonly string[];
   #position: number;
   #stash = "";
@@ -20,269 +23,183 @@ export class TextBuffer {
     this.#position = history.length;
   }
 
-  get text(): string {
-    return this.#state.text;
+  get prompt(): string {
+    return this.#prompt;
   }
 
-  initialize(columns: number): string {
-    const render = this.#render(columns);
-    return "\x1b[G" + render;
+  set prompt(value: string) {
+    this.#prompt = value;
   }
 
-  finish(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    const text = state.text + "\n";
-    this.#state = { text, cursor: text.length };
-    const render = this.#render(columns);
-    this.#state = state;
-    return reset + render;
+  get state(): TextBufferState {
+    return this.#state;
   }
 
-  insertText(insertion: string, columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    if (insertion) {
-      const text = state.text.substring(0, state.cursor) +
-        insertion + state.text.substring(state.cursor);
-      this.#state = {
-        text,
-        cursor: nextGraphemeBoundary(text, state.cursor + insertion.length),
-      };
-    }
-    const render = this.#render(columns);
-    return reset + render;
+  setState(text: string, cursor: number): undefined {
+    this.#state = { text, cursor: nextGraphemeBoundary(text, cursor) };
   }
 
-  deleteBackward(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    if (state.cursor !== 0) {
-      const { start, end } = getGraphemeRange(state.text, state.cursor - 1);
-      const text = state.text.substring(0, start) + state.text.substring(end);
-      this.#state = { text, cursor: nextGraphemeBoundary(text, start) };
-    }
-    const render = this.#render(columns);
-    return reset + render;
+  get history(): readonly string[] {
+    return this.#history;
   }
 
-  deleteForward(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    if (state.cursor !== state.text.length) {
-      const { start, end } = getGraphemeRange(state.text, state.cursor);
-      const text = state.text.substring(0, start) + state.text.substring(end);
-      this.#state = { text, cursor: nextGraphemeBoundary(text, start) };
-    }
-    const render = this.#render(columns);
-    return reset + render;
+  get position(): number {
+    return this.#position;
   }
 
-  cutToStart(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    if (state.cursor !== 0) {
-      const text = state.text.substring(state.cursor);
-      this.#state = { text, cursor: 0 };
-    }
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  cutToEnd(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    if (state.cursor !== state.text.length) {
-      const text = state.text.substring(0, state.cursor);
-      this.#state = { text, cursor: state.cursor };
-    }
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  cutPreviousWord(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    if (state.cursor !== 0) {
-      const { start } = getPreviousWordRange(state.text, state.cursor);
-      const text = state.text.substring(0, start) +
-        state.text.substring(state.cursor);
-      this.#state = { text, cursor: nextGraphemeBoundary(text, start) };
-    }
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  cutNextWord(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    if (state.cursor !== state.text.length) {
-      const { end } = getNextWordRange(state.text, state.cursor);
-      const text = state.text.substring(0, state.cursor) +
-        state.text.substring(end);
-      this.#state = { text, cursor: nextGraphemeBoundary(text, state.cursor) };
-    }
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  moveToStart(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    state.cursor = 0;
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  moveToEnd(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    state.cursor = state.text.length;
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  moveBackward(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    if (state.cursor !== 0) {
-      const { start } = getGraphemeRange(state.text, state.cursor - 1);
-      state.cursor = start;
-    }
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  moveForward(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    if (state.cursor !== state.text.length) {
-      const { end } = getGraphemeRange(state.text, state.cursor);
-      state.cursor = end;
-    }
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  moveBackwardWord(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    if (state.cursor !== 0) {
-      const { start } = getPreviousWordRange(state.text, state.cursor);
-      state.cursor = start;
-    }
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  moveForwardWord(columns: number): string {
-    const reset = this.#reset(columns);
-    const state = this.#state;
-    if (state.cursor !== state.text.length) {
-      const { end } = getNextWordRange(state.text, state.cursor);
-      state.cursor = end;
-    }
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  clearScreen(columns: number): string {
-    const render = this.#render(columns);
-    return "\x1b[H" + render;
-  }
-
-  clearDisplay(columns: number): string {
-    const render = this.#render(columns);
-    return "\x1b[H\x1b[3J" + render;
-  }
-
-  nextHistory(columns: number): string {
-    const reset = this.#reset(columns);
-    if (this.#position !== this.#history.length) {
-      this.#navigate(this.#position + 1);
-    }
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  previousHistory(columns: number): string {
-    const reset = this.#reset(columns);
-    if (this.#position !== 0) {
-      this.#navigate(this.#position - 1);
-    }
-    const render = this.#render(columns);
-    return reset + render;
-  }
-
-  #navigate(target: number): undefined {
-    if (this.#position === target) {
+  navigate(to: number): undefined {
+    const position = this.#position;
+    if (position === to) {
       return;
     }
-    if (this.#position === this.#history.length) {
+    const history = this.#history;
+    if (position === history.length) {
       this.#stash = this.#state.text;
     }
-    this.#position = target;
+    this.#position = to;
     let text: string;
-    if (this.#position === this.#history.length) {
+    if (to === history.length) {
       text = this.#stash;
       this.#stash = "";
     } else {
-      text = this.#history[this.#position]!;
+      text = history[to]!;
     }
-    this.#state = { text, cursor: text.length };
+    this.setState(text, text.length);
   }
 
-  #reset(columns: number): string {
-    const prompt = this.#prompt;
-    const { text, cursor } = this.#state;
-    const leadingText = `${prompt}${text.substring(0, cursor)}`;
-    const pos = { row: 0, column: 0 };
-    advanceCursor(pos, columns, leadingText);
-    wrapCursor(pos, columns);
-    const lines = pos.row;
-    switch (lines) {
-      case 0:
-        return "\r";
-      case 1:
-        return "\x1b[F";
-      default:
-        return `\x1b[${lines}F`;
+  moveCursor(to: number): undefined {
+    const { text, cursor } = this.state;
+    if (cursor === to) {
+      return;
     }
+    this.setState(text, to);
   }
 
-  #render(columns: number): string {
-    const prompt = this.#prompt;
-    const { text, cursor } = this.#state;
-    const leadingText = `${prompt}${text.substring(0, cursor)}`;
-    const trailingText = text.substring(cursor);
-    const pos = { row: 0, column: 0 };
-    advanceCursor(pos, columns, leadingText);
-    const target = { row: pos.row, column: pos.column };
-    wrapCursor(target, columns);
-    advanceCursor(pos, columns, trailingText);
-    const escaped = escapeControlCharacters(text, true);
-    let sequence = `${prompt}${escaped.replaceAll("\n", "\x1b[K\n")}\x1b[J`;
-    const lines = pos.row - target.row;
-    let column = pos.column;
-    switch (lines) {
-      case -1:
-        sequence += "\n";
-        column = 0;
-        break;
-      case 0:
-        break;
-      case 1:
-        sequence += "\x1b[F";
-        column = 0;
-        break;
-      default:
-        sequence += `\x1b[${lines}F`;
-        column = 0;
-        break;
+  replaceText(start: number, end: number, replacement: string): undefined {
+    if (start === end && !replacement) {
+      return;
     }
-    if (column !== target.column) {
-      sequence += `\x1b[${target.column + 1}G`;
+    const { text } = this.state;
+    this.setState(
+      text.substring(0, start) + replacement + text.substring(end),
+      start + replacement.length,
+    );
+  }
+
+  insertText(insertion: string): undefined {
+    const { cursor } = this.state;
+    this.replaceText(cursor, cursor, insertion);
+  }
+
+  deleteText(start: number, end: number): undefined {
+    this.replaceText(start, end, "");
+  }
+
+  deleteBackward(): undefined {
+    const { text, cursor } = this.state;
+    if (cursor === 0) {
+      return;
     }
-    return sequence;
+    const { start, end } = getGraphemeRange(text, cursor - 1);
+    this.deleteText(start, end);
+  }
+
+  deleteForward(): undefined {
+    const { text, cursor } = this.state;
+    if (cursor === text.length) {
+      return;
+    }
+    const { start, end } = getGraphemeRange(text, cursor);
+    this.deleteText(start, end);
+  }
+
+  cutToStart(): undefined {
+    const { cursor } = this.state;
+    this.deleteText(0, cursor);
+  }
+
+  cutToEnd(): undefined {
+    const { text, cursor } = this.state;
+    this.deleteText(cursor, text.length);
+  }
+
+  cutPreviousWord(): undefined {
+    const { text, cursor } = this.state;
+    if (cursor === 0) {
+      return;
+    }
+    const { start } = getPreviousWordRange(text, cursor);
+    this.deleteText(start, cursor);
+  }
+
+  cutNextWord(): undefined {
+    const { text, cursor } = this.state;
+    if (cursor === text.length) {
+      return;
+    }
+    const { end } = getNextWordRange(text, cursor);
+    this.deleteText(cursor, end);
+  }
+
+  moveToStart(): undefined {
+    this.moveCursor(0);
+  }
+
+  moveToEnd(): undefined {
+    const { text } = this.state;
+    this.moveCursor(text.length);
+  }
+
+  moveBackward(): undefined {
+    const { text, cursor } = this.state;
+    if (cursor === 0) {
+      return;
+    }
+    const { start } = getGraphemeRange(text, cursor - 1);
+    this.moveCursor(start);
+  }
+
+  moveForward(): undefined {
+    const { text, cursor } = this.state;
+    if (cursor === text.length) {
+      return;
+    }
+    const { end } = getGraphemeRange(text, cursor);
+    this.moveCursor(end);
+  }
+
+  moveBackwardWord(): undefined {
+    const { text, cursor } = this.state;
+    if (cursor === 0) {
+      return;
+    }
+    const { start } = getPreviousWordRange(text, cursor);
+    this.moveCursor(start);
+  }
+
+  moveForwardWord(): undefined {
+    const { text, cursor } = this.state;
+    if (cursor === text.length) {
+      return;
+    }
+    const { end } = getNextWordRange(text, cursor);
+    this.moveCursor(end);
+  }
+
+  nextHistory(): undefined {
+    const position = this.position;
+    const history = this.history;
+    if (position === history.length) {
+      return;
+    }
+    this.navigate(position + 1);
+  }
+
+  previousHistory(): undefined {
+    const position = this.position;
+    if (position === 0) {
+      return;
+    }
+    this.navigate(position - 1);
   }
 }

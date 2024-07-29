@@ -6,7 +6,8 @@
     "./env/deno": "./env/deno.ts"
   },
   "imports": {
-    "@std/cli": "jsr:@std/cli@^1.0.0"
+    "@std/cli": "jsr:@std/cli@^1.0.0",
+    "@std/fmt": "jsr:@std/fmt@1.0.0-rc.1"
   },
   "compilerOptions": {
     "noImplicitOverride": true,

@@ -1,7 +1,7 @@
 import { unicodeWidth } from "@std/cli/unicode-width";
+import { stripAnsiCode } from "@std/fmt/colors";
 
 import { graphemes } from "./boundary.ts";
-import { escapeControlCharacters } from "./control.ts";
 
 const { min } = Math;
 
@@ -15,7 +15,7 @@ export function advanceCursor(
   columns: number,
   text: string,
 ): undefined {
-  for (const grapheme of graphemes(escapeControlCharacters(text, false))) {
+  for (const grapheme of graphemes(stripAnsiCode(text))) {
     if (grapheme === "\n") {
       pos.row++;
       pos.column = 0;

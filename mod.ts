@@ -2,6 +2,7 @@ import { TextBuffer } from "./buffer.ts";
 import { type Command, CommandDecoder, type CommandTree } from "./command.ts";
 import type { PromptEnvironment } from "./env/common.ts";
 import { TextReader, TextWriter } from "./io.ts";
+import { Renderer } from "./renderer.ts";
 
 export type { Command, CommandTree, PromptEnvironment };
 export const defaultCommands: CommandTree = Object.freeze<CommandTree>({
@@ -126,9 +127,9 @@ export type PromptResult =
   | PromptAbortResult;
 
 export interface PromptOptions {
-  prompt?: string;
-  history?: readonly string[];
-  commands?: CommandTree;
+  prompt?: string | undefined;
+  history?: readonly string[] | undefined;
+  commands?: CommandTree | undefined;
 }
 
 export async function prompt(
@@ -148,92 +149,94 @@ export async function prompt(
         const w = new TextWriter(wb);
         await w.write("\x1b[?2004h");
         try {
-          const cd = new CommandDecoder(commands);
-          const buf = new TextBuffer(prompt, history);
+          const decoder = new CommandDecoder(commands);
+          const buffer = new TextBuffer(prompt, history);
+          const renderer = new Renderer();
           let quotedInsert = false;
           let pasteBuffer: string | undefined;
-          await w.write(buf.initialize(env.getScreenWidth()));
+          let action: PromptResult["action"];
+          readCommands:
           for (;;) {
+            await w.write(renderer.update(buffer, env.getScreenWidth()));
             const c = await r.readCodePoint();
             if (c === null) {
-              await w.write(buf.finish(env.getScreenWidth()));
-              return { action: "cancel" };
+              action = "cancel";
+              break;
             }
-            if (cd.empty) {
+            if (decoder.empty) {
               if (pasteBuffer !== undefined) {
                 pasteBuffer += c;
                 if (pasteBuffer.endsWith("\x1b[201~")) {
-                  const str = pasteBuffer.slice(0, -"\x1b[201~".length);
-                  await w.write(buf.insertText(str, env.getScreenWidth()));
+                  buffer.insertText(pasteBuffer.slice(0, -"\x1b[201~".length));
                   pasteBuffer = undefined;
                 }
                 continue;
               }
               if (quotedInsert || !controlCharacterRE.test(c)) {
-                await w.write(buf.insertText(c, env.getScreenWidth()));
+                buffer.insertText(c);
                 quotedInsert = false;
                 continue;
               }
-              if (c === "\x04" && buf.text.length === 0) {
-                await w.write(buf.finish(env.getScreenWidth()));
-                return { action: "cancel" };
+              if (c === "\x04" && buffer.state.text.length === 0) {
+                action = "cancel";
+                break;
               }
             }
-            const command = cd.next(c);
+            const command = decoder.next(c);
             switch (command) {
               case "commit":
-                await w.write(buf.finish(env.getScreenWidth()));
-                return { action: "commit", text: buf.text };
+                action = "commit";
+                break readCommands;
               case "abort":
-                await w.write(buf.finish(env.getScreenWidth()));
-                return { action: "abort", text: buf.text };
+                action = "abort";
+                break readCommands;
               case "delete-backward":
-                await w.write(buf.deleteBackward(env.getScreenWidth()));
+                buffer.deleteBackward();
                 break;
               case "delete-forward":
-                await w.write(buf.deleteForward(env.getScreenWidth()));
+                buffer.deleteForward();
                 break;
               case "cut-to-start":
-                await w.write(buf.cutToStart(env.getScreenWidth()));
+                buffer.cutToStart();
                 break;
               case "cut-to-end":
-                await w.write(buf.cutToEnd(env.getScreenWidth()));
+                buffer.cutToEnd();
                 break;
               case "cut-previous-word":
-                await w.write(buf.cutPreviousWord(env.getScreenWidth()));
+                buffer.cutPreviousWord();
                 break;
               case "cut-next-word":
-                await w.write(buf.cutNextWord(env.getScreenWidth()));
+                buffer.cutNextWord();
                 break;
               case "move-to-start":
-                await w.write(buf.moveToStart(env.getScreenWidth()));
+                buffer.moveToStart();
                 break;
               case "move-to-end":
-                await w.write(buf.moveToEnd(env.getScreenWidth()));
+                buffer.moveToEnd();
                 break;
               case "move-backward":
-                await w.write(buf.moveBackward(env.getScreenWidth()));
+                buffer.moveBackward();
                 break;
               case "move-forward":
-                await w.write(buf.moveForward(env.getScreenWidth()));
+                buffer.moveForward();
                 break;
               case "move-backward-word":
-                await w.write(buf.moveBackwardWord(env.getScreenWidth()));
+                buffer.moveBackwardWord();
                 break;
               case "move-forward-word":
-                await w.write(buf.moveForwardWord(env.getScreenWidth()));
+                buffer.moveForwardWord();
                 break;
               case "clear-screen":
-                await w.write(buf.clearScreen(env.getScreenWidth()));
+                renderer.setResetSequence("\x1b[H");
                 break;
               case "clear-display":
-                await w.write(buf.clearDisplay(env.getScreenWidth()));
+                renderer.setResetSequence("\x1b[H\x1b[3J");
                 break;
               case "next-history":
-                await w.write(buf.nextHistory(env.getScreenWidth()));
+                buffer.nextHistory();
                 break;
               case "previous-history":
-                await w.write(buf.previousHistory(env.getScreenWidth()));
+                buffer.previousHistory();
                 break;
               case "quoted-insert":
                 quotedInsert = true;
@@ -243,8 +246,13 @@ export async function prompt(
                 break;
               default:
                 command satisfies null;
+                break;
             }
           }
+          const { text } = buffer.state;
+          buffer.replaceText(text.length, text.length, "\n");
+          await w.write(renderer.update(buffer, env.getScreenWidth()));
+          return action === "cancel" ? { action } : { action, text };
         } finally {
           await w.write("\x1b[?2004l");
         }

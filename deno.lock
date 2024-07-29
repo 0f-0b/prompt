@@ -2,18 +2,23 @@
   "version": "3",
   "packages": {
     "specifiers": {
-      "jsr:@std/cli@^1.0.0": "jsr:@std/cli@1.0.1"
+      "jsr:@std/cli@^1.0.0": "jsr:@std/cli@1.0.1",
+      "jsr:@std/fmt@1.0.0-rc.1": "jsr:@std/fmt@1.0.0-rc.1"
     },
     "jsr": {
       "@std/cli@1.0.1": {
         "integrity": "d0661fba13b30e3c0121646589fa9beeeabe92482c6b04679ea0e7ec683d97f2"
+      },
+      "@std/fmt@1.0.0-rc.1": {
+        "integrity": "3dbbd12f1704c62b5bd33c9ff928c8df47cd5c75f6637201a8c21298b28e43bc"
       }
     }
   },
   "remote": {},
   "workspace": {
     "dependencies": [
-      "jsr:@std/cli@^1.0.0"
+      "jsr:@std/cli@^1.0.0",
+      "jsr:@std/fmt@1.0.0-rc.1"
     ]
   }
 }

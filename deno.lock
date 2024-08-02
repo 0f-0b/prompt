@@ -2,15 +2,15 @@
   "version": "3",
   "packages": {
     "specifiers": {
-      "jsr:@std/cli@^1.0.0": "jsr:@std/cli@1.0.1",
-      "jsr:@std/fmt@1.0.0-rc.1": "jsr:@std/fmt@1.0.0-rc.1"
+      "jsr:@std/cli@^1.0.0": "jsr:@std/cli@1.0.2",
+      "jsr:@std/fmt@^1.0.0": "jsr:@std/fmt@1.0.0"
     },
     "jsr": {
-      "@std/cli@1.0.1": {
-        "integrity": "d0661fba13b30e3c0121646589fa9beeeabe92482c6b04679ea0e7ec683d97f2"
+      "@std/cli@1.0.2": {
+        "integrity": "fc12cf1a16d0e6c073dce3f95c202e580c428047ed719007617460b98e57923d"
       },
-      "@std/fmt@1.0.0-rc.1": {
-        "integrity": "3dbbd12f1704c62b5bd33c9ff928c8df47cd5c75f6637201a8c21298b28e43bc"
+      "@std/fmt@1.0.0": {
+        "integrity": "8a95c9fdbb61559418ccbc0f536080cf43341655e1444f9d375a66886ceaaa3d"
       }
     }
   },
@@ -18,7 +18,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/cli@^1.0.0",
-      "jsr:@std/fmt@1.0.0-rc.1"
+      "jsr:@std/fmt@^1.0.0"
     ]
   }
 }

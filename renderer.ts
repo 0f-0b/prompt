@@ -1,27 +1,31 @@
 import type { TextBuffer, TextBufferState } from "./buffer.ts";
 import { escapeControlChars } from "./control.ts";
 import { advanceCursor, wrapCursor } from "./cursor.ts";
+import type { PromptEnvironment } from "./env/common.ts";
 
 export class Renderer {
+  readonly #env: PromptEnvironment;
   #lastLeadingText = "";
   #lastPrompt?: string;
   #lastState?: TextBufferState;
-  #resetSequence: string | undefined;
 
-  setResetSequence(sequence: string): undefined {
-    this.#resetSequence = sequence;
+  constructor(env: PromptEnvironment) {
+    this.#env = env;
   }
 
-  update(buf: TextBuffer, columns: number): string {
+  render(buf: TextBuffer): string {
     const { prompt, state } = buf;
-    if (
-      this.#lastPrompt === prompt && this.#lastState === state &&
-      this.#resetSequence === undefined
-    ) {
+    const columns = this.#env.getScreenWidth();
+    return this.#render(prompt, state, columns);
+  }
+
+  update(buf: TextBuffer): string {
+    const { prompt, state } = buf;
+    if (this.#lastPrompt === prompt && this.#lastState === state) {
       return "";
     }
-    const reset = this.#resetSequence ?? this.#reset(columns);
-    this.#resetSequence = undefined;
+    const columns = this.#env.getScreenWidth();
+    const reset = this.#reset(columns);
     const render = this.#render(prompt, state, columns);
     return reset + render;
   }

@@ -2,22 +2,24 @@
 
 import { type Command, defaultCommands } from "../mod.ts";
 
-// deno-lint-ignore ban-types
-const map: Partial<Record<Command, string[]>> = { __proto__: null } as {};
+const map: Map<Command, string[]> = new Map();
 (function dump(tree, prefix) {
   for (const [key, command] of Object.entries(tree)) {
     const sequence = prefix + key;
-    if (typeof command === "string") {
-      map[command] ??= [];
-      map[command].push(sequence);
+    if (typeof command === "function") {
+      let sequences = map.get(command);
+      if (!sequences) {
+        map.set(command, sequences = []);
+      }
+      sequences.push(sequence);
     } else {
       dump(command, sequence);
     }
   }
 })(defaultCommands, "");
 for (
-  const [command, keys] of Object.entries(map)
-    .sort(([a], [b]) => a > b ? 1 : a < b ? -1 : 0)
+  const [command, keys] of Array.from(map)
+    .sort(([{ name: a }], [{ name: b }]) => a > b ? 1 : a < b ? -1 : 0)
 ) {
-  console.log("%s: %o", command, keys);
+  console.log("%s: %o", command.name, keys);
 }

@@ -24,6 +24,7 @@ export class CommandContext {
   readonly writer: TextWriter;
   readonly buffer: TextBuffer;
   readonly renderer: Renderer;
+  prompt: string;
   lastChar = "";
   #data = new Map<symbol, unknown>();
   #jobs: Jobs;
@@ -33,21 +34,27 @@ export class CommandContext {
     writer: TextWriter,
     buffer: TextBuffer,
     renderer: Renderer,
+    prompt: string,
     jobs: Jobs,
   ) {
     this.reader = reader;
     this.writer = writer;
     this.buffer = buffer;
     this.renderer = renderer;
+    this.prompt = prompt;
     this.#jobs = jobs;
   }
 
-  async draw(prefix = ""): Promise<undefined> {
-    await this.writer.write(prefix + this.renderer.render(this.buffer));
+  async draw(prefix = this.prompt, suffix = ""): Promise<undefined> {
+    await this.writer.write(
+      this.renderer.render(prefix, suffix, this.buffer.state),
+    );
   }
 
-  async redraw(): Promise<undefined> {
-    await this.writer.write(this.renderer.update(this.buffer));
+  async redraw(prefix = this.prompt, suffix = ""): Promise<undefined> {
+    await this.writer.write(
+      this.renderer.update(prefix, suffix, this.buffer.state),
+    );
   }
 
   get<T>(field: DataField<T>): T {

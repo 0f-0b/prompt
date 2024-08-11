@@ -1,4 +1,4 @@
-import type { TextBuffer, TextBufferState } from "./buffer.ts";
+import type { TextBufferState } from "./buffer.ts";
 import { escapeControlChars } from "./control.ts";
 import { advanceCursor, wrapCursor } from "./cursor.ts";
 import type { PromptEnvironment } from "./env/common.ts";
@@ -6,27 +6,30 @@ import type { PromptEnvironment } from "./env/common.ts";
 export class Renderer {
   readonly #env: PromptEnvironment;
   #lastLeadingText = "";
-  #lastPrompt?: string;
+  #lastPrefix?: string;
+  #lastSuffix?: string;
   #lastState?: TextBufferState;
 
   constructor(env: PromptEnvironment) {
     this.#env = env;
   }
 
-  render(buf: TextBuffer): string {
-    const { prompt, state } = buf;
+  render(prefix: string, suffix: string, state: TextBufferState): string {
     const columns = this.#env.getScreenWidth();
-    return this.#render(prompt, state, columns);
+    return this.#render(prefix, suffix, state, columns);
   }
 
-  update(buf: TextBuffer): string {
-    const { prompt, state } = buf;
-    if (this.#lastPrompt === prompt && this.#lastState === state) {
+  update(prefix: string, suffix: string, state: TextBufferState): string {
+    if (
+      this.#lastPrefix === prefix &&
+      this.#lastSuffix === suffix &&
+      this.#lastState === state
+    ) {
       return "";
     }
     const columns = this.#env.getScreenWidth();
     const reset = this.#reset(columns);
-    const render = this.#render(prompt, state, columns);
+    const render = this.#render(prefix, suffix, state, columns);
     return reset + render;
   }
 
@@ -45,10 +48,15 @@ export class Renderer {
     }
   }
 
-  #render(prompt: string, state: TextBufferState, columns: number): string {
+  #render(
+    prefix: string,
+    suffix: string,
+    state: TextBufferState,
+    columns: number,
+  ): string {
     const { text, cursor } = state;
-    const leadingText = prompt + escapeControlChars(text.substring(0, cursor));
-    const trailingText = escapeControlChars(text.substring(cursor));
+    const leadingText = prefix + escapeControlChars(text.substring(0, cursor));
+    const trailingText = escapeControlChars(text.substring(cursor)) + suffix;
     const pos = { row: 0, column: 0 };
     advanceCursor(pos, columns, leadingText);
     const target = { row: pos.row, column: pos.column };
@@ -78,7 +86,8 @@ export class Renderer {
       sequence += `\x1b[${target.column + 1}G`;
     }
     this.#lastLeadingText = leadingText;
-    this.#lastPrompt = prompt;
+    this.#lastPrefix = prefix;
+    this.#lastSuffix = suffix;
     this.#lastState = state;
     return sequence;
   }

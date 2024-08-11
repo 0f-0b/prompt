@@ -11,25 +11,15 @@ export interface TextBufferState {
 }
 
 export class TextBuffer {
-  #prompt: string;
   #state: TextBufferState = { text: "", cursor: 0 };
   readonly #savedStates: TextBufferState[] = [];
   readonly #history: readonly string[];
   #position: number;
   #stash = "";
 
-  constructor(prompt: string, history: readonly string[]) {
-    this.#prompt = prompt;
+  constructor(history: readonly string[]) {
     this.#history = history;
     this.#position = history.length;
-  }
-
-  get prompt(): string {
-    return this.#prompt;
-  }
-
-  set prompt(value: string) {
-    this.#prompt = value;
   }
 
   get state(): TextBufferState {

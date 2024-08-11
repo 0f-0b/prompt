@@ -79,11 +79,11 @@ export const moveForwardWord: Command = async (ctx) => {
   return "continue";
 };
 export const clearScreen: Command = async (ctx) => {
-  await ctx.draw("\x1b[H");
+  await ctx.draw("\x1b[H" + ctx.prompt);
   return "continue";
 };
 export const clearDisplay: Command = async (ctx) => {
-  await ctx.draw("\x1b[H\x1b[3J");
+  await ctx.draw("\x1b[H\x1b[3J" + ctx.prompt);
   return "continue";
 };
 export const nextHistory: Command = async (ctx) => {

@@ -175,7 +175,7 @@ export async function prompt(
         await writer.write("\x1b[?2004h");
         try {
           const decoder = new CommandDecoder(commands);
-          const buffer = new TextBuffer(prompt, history);
+          const buffer = new TextBuffer(history);
           const renderer = new Renderer(env);
           const jobs = new Jobs();
           const ctx = new CommandContext(
@@ -183,9 +183,10 @@ export async function prompt(
             writer,
             buffer,
             renderer,
+            prompt,
             jobs,
           );
-          await ctx.draw("\x1b[G");
+          await ctx.draw("\x1b[G" + ctx.prompt);
           let action: PromptResult["action"];
           for (;;) {
             const c = await reader.readCodePoint();

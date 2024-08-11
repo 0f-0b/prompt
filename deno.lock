@@ -2,12 +2,12 @@
   "version": "3",
   "packages": {
     "specifiers": {
-      "jsr:@std/cli@^1.0.0": "jsr:@std/cli@1.0.2",
+      "jsr:@std/cli@^1.0.0": "jsr:@std/cli@1.0.3",
       "jsr:@std/fmt@^1.0.0": "jsr:@std/fmt@1.0.0"
     },
     "jsr": {
-      "@std/cli@1.0.2": {
-        "integrity": "fc12cf1a16d0e6c073dce3f95c202e580c428047ed719007617460b98e57923d"
+      "@std/cli@1.0.3": {
+        "integrity": "9a0488b5d2e58d29dce106a941eecec7181fae996bf0d2225563f1ca7e4b100c"
       },
       "@std/fmt@1.0.0": {
         "integrity": "8a95c9fdbb61559418ccbc0f536080cf43341655e1444f9d375a66886ceaaa3d"

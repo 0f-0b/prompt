@@ -181,24 +181,24 @@ export async function prompt(
   const prompt = options?.prompt ?? "> ";
   const history = options?.history ?? [];
   const commands = options?.commands ?? defaultCommands;
-  const rb = env.readable.getReader({ mode: "byob" });
+  const byteReader = env.readable.getReader({ mode: "byob" });
   try {
-    const wb = env.writable.getWriter();
+    const byteWriter = env.writable.getWriter();
     try {
       env.setRawMode(true);
       try {
-        const r = new TextReader(rb);
-        const w = new TextWriter(wb);
-        await w.write("\x1b[?2004h");
+        const reader = new TextReader(byteReader);
+        const writer = new TextWriter(byteWriter);
+        await writer.write("\x1b[?2004h");
         try {
           const decoder = new CommandDecoder(commands);
           const buffer = new TextBuffer(prompt, history);
           const renderer = new Renderer(env);
-          const ctx = new CommandContext(r, w, buffer, renderer);
-          await w.write("\x1b[G" + renderer.render(buffer));
+          const ctx = new CommandContext(reader, writer, buffer, renderer);
+          await ctx.draw("\x1b[G");
           let action: PromptResult["action"];
           for (;;) {
-            const c = await r.readCodePoint();
+            const c = await reader.readCodePoint();
             if (c === null) {
               action = "cancel";
               break;
@@ -221,18 +221,18 @@ export async function prompt(
           }
           const { text } = buffer.state;
           buffer.replaceText(text.length, text.length, "\n");
-          await w.write(renderer.update(buffer));
+          await ctx.redraw();
           return action === "cancel" ? { action } : { action, text };
         } finally {
-          await w.write("\x1b[?2004l");
+          await writer.write("\x1b[?2004l");
         }
       } finally {
         env.setRawMode(false);
       }
     } finally {
-      wb.releaseLock();
+      byteWriter.releaseLock();
     }
   } finally {
-    rb.releaseLock();
+    byteReader.releaseLock();
   }
 }

@@ -24,6 +24,10 @@ export class CommandContext {
     this.renderer = renderer;
   }
 
+  async draw(prefix = ""): Promise<undefined> {
+    await this.writer.write(prefix + this.renderer.render(this.buffer));
+  }
+
   async redraw(): Promise<undefined> {
     await this.writer.write(this.renderer.update(this.buffer));
   }

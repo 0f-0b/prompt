@@ -29,22 +29,27 @@ import {
   CommandDecoder,
   type CommandResult,
   type CommandTree,
+  DataField,
+  type Job,
+  Jobs,
 } from "./command.ts";
 import type { PromptEnvironment } from "./env/common.ts";
 import { TextReader, TextWriter } from "./io.ts";
 import { Renderer } from "./renderer.ts";
 
-export type {
-  Command,
-  CommandContext,
-  CommandResult,
-  CommandTree,
-  PromptEnvironment,
-  Renderer,
-  TextBuffer,
-  TextBufferState,
-  TextReader,
-  TextWriter,
+export {
+  type Command,
+  type CommandContext,
+  type CommandResult,
+  type CommandTree,
+  DataField,
+  type Job,
+  type PromptEnvironment,
+  type Renderer,
+  type TextBuffer,
+  type TextBufferState,
+  type TextReader,
+  type TextWriter,
 };
 export const defaultCommands: CommandTree = Object.freeze<CommandTree>({
   // @ts-expect-error Remove prototype
@@ -194,7 +199,14 @@ export async function prompt(
           const decoder = new CommandDecoder(commands);
           const buffer = new TextBuffer(prompt, history);
           const renderer = new Renderer(env);
-          const ctx = new CommandContext(reader, writer, buffer, renderer);
+          const jobs = new Jobs();
+          const ctx = new CommandContext(
+            reader,
+            writer,
+            buffer,
+            renderer,
+            jobs,
+          );
           await ctx.draw("\x1b[G");
           let action: PromptResult["action"];
           for (;;) {
@@ -208,15 +220,15 @@ export async function prompt(
             if (command === null) {
               continue;
             }
+            jobs.thisTick = jobs.nextTick;
+            jobs.nextTick = new Map();
             const result = await command(ctx);
             if (result !== "continue") {
               action = result;
               break;
             }
-            if (ctx.justInsertedChar) {
-              ctx.justInsertedChar = false;
-            } else {
-              ctx.charsUntilSaveState = 0;
+            for (const job of jobs.thisTick.values()) {
+              await job(ctx);
             }
           }
           const { text } = buffer.state;

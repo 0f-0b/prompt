@@ -1,11 +1,12 @@
 import type { Command } from "./command.ts";
+import { insertChar } from "./insert_char.ts";
 
 // deno-lint-ignore require-await
 export const commit: Command = async () => "commit";
 // deno-lint-ignore require-await
 export const abort: Command = async () => "abort";
 export const insert: Command = async (ctx) => {
-  ctx.insertChar(ctx.lastChar);
+  insertChar(ctx, ctx.lastChar);
   await ctx.redraw();
   return "continue";
 };
@@ -105,7 +106,7 @@ export const quotedInsert: Command = async (ctx) => {
   if (c === null) {
     return "cancel";
   }
-  ctx.insertChar(c);
+  insertChar(ctx, c);
   await ctx.redraw();
   return "continue";
 };

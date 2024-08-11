@@ -24,6 +24,7 @@ import {
   undo,
 } from "./builtin.ts";
 import {
+  buildCommandTree,
   type Command,
   CommandContext,
   CommandDecoder,
@@ -38,6 +39,7 @@ import { TextReader, TextWriter } from "./io.ts";
 import { Renderer } from "./renderer.ts";
 
 export {
+  buildCommandTree,
   type Command,
   type CommandContext,
   type CommandResult,
@@ -51,9 +53,7 @@ export {
   type TextReader,
   type TextWriter,
 };
-export const defaultCommands: CommandTree = Object.freeze<CommandTree>({
-  // @ts-expect-error Remove prototype
-  __proto__: null,
+export const defaultCommands: CommandTree = buildCommandTree({
   "\n" /* ^J */: commit,
   "\r" /* ^M */: commit,
   "\x03" /* ^C */: abort,
@@ -72,15 +72,11 @@ export const defaultCommands: CommandTree = Object.freeze<CommandTree>({
   "\x11" /* ^Q */: quotedInsert,
   "\x16" /* ^V */: quotedInsert,
   "\x1f" /* ^_ */: undo,
-  "\x18" /* ^X */: Object.freeze<CommandTree>({
-    // @ts-expect-error Remove prototype
-    __proto__: null,
+  "\x18" /* ^X */: {
     "\x7f" /* ^? */: cutToStart,
     "\x15" /* ^U */: undo,
-  }),
-  "\x1b" /* ^[ */: Object.freeze<CommandTree>({
-    // @ts-expect-error Remove prototype
-    __proto__: null,
+  },
+  "\x1b" /* ^[ */: {
     "\b" /* ^H */: cutPreviousWord,
     "\x7f" /* ^? */: cutPreviousWord,
     "D": cutNextWord,
@@ -90,68 +86,50 @@ export const defaultCommands: CommandTree = Object.freeze<CommandTree>({
     "F": moveForwardWord,
     "f": moveForwardWord,
     "\f" /* ^L */: clearDisplay,
-    "[": Object.freeze<CommandTree>({
-      // @ts-expect-error Remove prototype
-      __proto__: null,
+    "[": {
       "H": moveToStart,
       "F": moveToEnd,
       "D": moveBackward,
       "C": moveForward,
       "B": nextHistory,
       "A": previousHistory,
-      "1": Object.freeze<CommandTree>({
-        // @ts-expect-error Remove prototype
-        __proto__: null,
-        ";": Object.freeze<CommandTree>({
-          // @ts-expect-error Remove prototype
-          __proto__: null,
-          "3": Object.freeze<CommandTree>({
-            // @ts-expect-error Remove prototype
-            __proto__: null,
+      "1": {
+        ";": {
+          "3": {
             "D": moveBackwardWord,
             "C": moveForwardWord,
-          }),
-          "5": Object.freeze<CommandTree>({
-            // @ts-expect-error Remove prototype
-            __proto__: null,
+          },
+          "5": {
             "D": moveBackwardWord,
             "C": moveForwardWord,
-          }),
-        }),
-      }),
-      "2": Object.freeze<CommandTree>({
-        "0": Object.freeze<CommandTree>({
-          "0": Object.freeze<CommandTree>({
+          },
+        },
+      },
+      "2": {
+        "0": {
+          "0": {
             "~": bracketedPasteBegin,
-          }),
-        }),
-      }),
-      "3": Object.freeze<CommandTree>({
-        // @ts-expect-error Remove prototype
-        __proto__: null,
+          },
+        },
+      },
+      "3": {
         "~": deleteForward,
-        ";": Object.freeze<CommandTree>({
-          // @ts-expect-error Remove prototype
-          __proto__: null,
-          "5": Object.freeze<CommandTree>({
-            // @ts-expect-error Remove prototype
-            __proto__: null,
+        ";": {
+          "5": {
             "~": cutNextWord,
-          }),
-        }),
-      }),
-    }),
-    "O": Object.freeze<CommandTree>({
-      // @ts-expect-error Remove prototype
-      __proto__: null,
+          },
+        },
+      },
+    },
+    "O": {
       "H": moveToStart,
       "F": moveToEnd,
       "D": moveBackward,
       "C": moveForward,
       "B": nextHistory,
       "A": previousHistory,
-    }),
-  }),
+    },
+  },
 });
 
 export interface PromptCommitResult {

@@ -78,7 +78,51 @@ export type CommandResult = "continue" | "commit" | "cancel" | "abort";
 export type Command = (ctx: CommandContext) => Promise<CommandResult>;
 
 export interface CommandTree {
-  readonly [cp: string]: Command | CommandTree;
+  readonly [codePoint: string]: Command | CommandTree;
+}
+
+export function buildCommandTree(...sources: CommandTree[]): CommandTree {
+  // deno-lint-ignore ban-types
+  const root: Record<string, Command | CommandTree> = { __proto__: null } as {};
+  for (const tree of sources) {
+    const sequence: string[] = [];
+    (function dump(tree) {
+      for (const [key, command] of Object.entries(tree)) {
+        sequence.push(key);
+        if (typeof command === "function") {
+          let target = root;
+          let lastCp = "";
+          for (const cp of sequence) {
+            if (lastCp) {
+              let branch = target[lastCp];
+              if (branch === undefined || typeof branch === "function") {
+                // deno-lint-ignore ban-types
+                target[lastCp] = branch = { __proto__: null } as {};
+              }
+              target = branch;
+            }
+            lastCp = cp;
+          }
+          if (lastCp) {
+            target[lastCp] = command;
+          }
+        } else {
+          dump(command);
+        }
+        sequence.pop();
+      }
+    })(tree);
+  }
+  const toFreeze = new Set([root]);
+  for (const tree of toFreeze) {
+    Object.freeze(tree);
+    for (const branch of Object.values(tree)) {
+      if (typeof branch !== "function") {
+        toFreeze.add(branch);
+      }
+    }
+  }
+  return root;
 }
 
 const controlCharacterRE = /\p{Cc}/u;

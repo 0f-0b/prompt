@@ -1,6 +1,4 @@
-const graphemeSegmenter = new Intl.Segmenter(undefined, {
-  granularity: "grapheme",
-});
+const graphemeSegmenter = new Intl.Segmenter();
 const wordSegmenter = new Intl.Segmenter(undefined, { granularity: "word" });
 
 export interface Range {
@@ -23,7 +21,7 @@ export function nextGraphemeBoundary(text: string, position: number): number {
   return position === start ? position : end;
 }
 
-export function* graphemes(text: string): IterableIterator<string> {
+export function* graphemes(text: string): IteratorObject<string, undefined> {
   for (const { segment } of graphemeSegmenter.segment(text)) {
     yield segment;
   }

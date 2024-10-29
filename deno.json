@@ -11,8 +11,6 @@
     "@std/fmt": "jsr:@std/fmt@^1.0.0"
   },
   "compilerOptions": {
-    "noImplicitOverride": true,
-    "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true
   },
   "publish": {
@@ -29,7 +27,7 @@
     }
   },
   "tasks": {
-    "cache": "deno cache examples/repl.ts examples/show_keybinds.ts",
-    "lint": "deno fmt --check && deno lint && deno check --all examples/repl.ts && deno check --all examples/show_keybinds.ts"
+    "cache": "deno cache --allow-import=jsr.io:443 examples/repl.ts examples/show_keybinds.ts",
+    "lint": "deno fmt --check && deno lint && deno check --all --allow-import=jsr.io:443 examples/repl.ts && deno check --all --allow-import=jsr.io:443 examples/show_keybinds.ts"
   }
 }

@@ -44,7 +44,7 @@ export class TextBuffer {
   resetState(): undefined {
     const savedStates = this.#savedStates;
     if (savedStates.length !== 0) {
-      this.#state = savedStates[0]!;
+      this.#state = savedStates[0];
       savedStates.length = 0;
     }
   }
@@ -76,7 +76,7 @@ export class TextBuffer {
       text = this.#stash;
       this.#stash = "";
     } else {
-      text = history[to]!;
+      text = history[to];
     }
     this.clearSavedStates();
     this.setState(text, text.length);

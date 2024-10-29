@@ -1,24 +1,21 @@
 {
-  "version": "3",
-  "packages": {
-    "specifiers": {
-      "jsr:@std/cli@^1.0.0": "jsr:@std/cli@1.0.4",
-      "jsr:@std/fmt@^1.0.0": "jsr:@std/fmt@1.0.1"
+  "version": "4",
+  "specifiers": {
+    "jsr:@std/cli@1": "1.0.6",
+    "jsr:@std/fmt@1": "1.0.3"
+  },
+  "jsr": {
+    "@std/cli@1.0.6": {
+      "integrity": "d22d8b38c66c666d7ad1f2a66c5b122da1704f985d3c47f01129f05abb6c5d3d"
     },
-    "jsr": {
-      "@std/cli@1.0.4": {
-        "integrity": "79ca75add572a99a8ba93ae37ccbd8d43fb4e2b635a8a7ebebb4f2d092048764"
-      },
-      "@std/fmt@1.0.1": {
-        "integrity": "ef76c37faa7720faa8c20fd8cc74583f9b1e356dfd630c8714baa716a45856ab"
-      }
+    "@std/fmt@1.0.3": {
+      "integrity": "97765c16aa32245ff4e2204ecf7d8562496a3cb8592340a80e7e554e0bb9149f"
     }
   },
-  "remote": {},
   "workspace": {
     "dependencies": [
-      "jsr:@std/cli@^1.0.0",
-      "jsr:@std/fmt@^1.0.0"
+      "jsr:@std/cli@1",
+      "jsr:@std/fmt@1"
     ]
   }
 }

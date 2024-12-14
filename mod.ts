@@ -34,6 +34,7 @@ import {
   type Job,
   Jobs,
 } from "./command.ts";
+import { ControlCharsDecorator, type Decorator } from "./decorator.ts";
 import type { PromptEnvironment } from "./env/common.ts";
 import { TextReader, TextWriter } from "./io.ts";
 import { Renderer } from "./renderer.ts";
@@ -45,6 +46,7 @@ export {
   type CommandResult,
   type CommandTree,
   DataField,
+  type Decorator,
   type Job,
   type PromptEnvironment,
   type Renderer,
@@ -131,6 +133,7 @@ export const defaultCommands: CommandTree = buildCommandTree({
     },
   },
 });
+export const defaultDecorator: Decorator = new ControlCharsDecorator();
 
 export interface PromptCommitResult {
   action: "commit";
@@ -155,6 +158,7 @@ export interface PromptOptions {
   prompt?: string | undefined;
   history?: readonly string[] | undefined;
   commands?: CommandTree | undefined;
+  decorator?: Decorator | undefined;
 }
 
 export async function prompt(
@@ -164,6 +168,7 @@ export async function prompt(
   const prompt = options?.prompt ?? "> ";
   const history = options?.history ?? [];
   const commands = options?.commands ?? defaultCommands;
+  const decorator = options?.decorator ?? defaultDecorator;
   const byteReader = env.readable.getReader({ mode: "byob" });
   try {
     const byteWriter = env.writable.getWriter();
@@ -176,7 +181,7 @@ export async function prompt(
         try {
           const decoder = new CommandDecoder(commands);
           const buffer = new TextBuffer(history);
-          const renderer = new Renderer(env);
+          const renderer = new Renderer(env, decorator);
           const jobs = new Jobs();
           const ctx = new CommandContext(
             reader,

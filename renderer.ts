@@ -1,17 +1,19 @@
 import type { TextBufferState } from "./buffer.ts";
-import { escapeControlChars } from "./control.ts";
 import { advanceCursor, wrapCursor } from "./cursor.ts";
+import type { Decorator } from "./decorator.ts";
 import type { PromptEnvironment } from "./env/common.ts";
 
 export class Renderer {
   readonly #env: PromptEnvironment;
+  readonly #decorator: Decorator;
   #lastLeadingText = "";
   #lastPrefix?: string;
   #lastSuffix?: string;
   #lastState?: TextBufferState;
 
-  constructor(env: PromptEnvironment) {
+  constructor(env: PromptEnvironment, decorator: Decorator) {
     this.#env = env;
+    this.#decorator = decorator;
   }
 
   render(prefix: string, suffix: string, state: TextBufferState): string {
@@ -54,9 +56,10 @@ export class Renderer {
     state: TextBufferState,
     columns: number,
   ): string {
+    const decorator = this.#decorator;
     const { text, cursor } = state;
-    const leadingText = prefix + escapeControlChars(text.substring(0, cursor));
-    const trailingText = escapeControlChars(text.substring(cursor)) + suffix;
+    const leadingText = prefix + decorator.decorate(text, 0, cursor);
+    const trailingText = decorator.decorate(text, cursor, text.length) + suffix;
     const pos = { row: 0, column: 0 };
     advanceCursor(pos, columns, leadingText);
     const target = { row: pos.row, column: pos.column };

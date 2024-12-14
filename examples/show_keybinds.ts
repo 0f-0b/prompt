@@ -2,7 +2,7 @@
 
 import { type Command, defaultCommands } from "jsr:@ud2/prompt";
 
-const map: Map<Command, string[]> = new Map();
+const map = new Map<Command, string[]>();
 (function dump(tree, prefix) {
   for (const [key, command] of Object.entries(tree)) {
     const sequence = prefix + key;

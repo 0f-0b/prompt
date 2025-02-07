@@ -30,13 +30,13 @@ export class TextReader {
 }
 
 export class TextWriter {
-  readonly #writer: WritableStreamDefaultWriter;
+  readonly #writer: WritableStreamDefaultWriter<Uint8Array<ArrayBuffer>>;
 
-  constructor(writer: WritableStreamDefaultWriter) {
+  constructor(writer: WritableStreamDefaultWriter<Uint8Array<ArrayBuffer>>) {
     this.#writer = writer;
   }
 
   async write(text: string): Promise<undefined> {
-    await this.#writer.write(encoder.encode(text));
+    await this.#writer.write(encoder.encode(text) as Uint8Array<ArrayBuffer>);
   }
 }

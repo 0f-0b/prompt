@@ -14,4 +14,4 @@ jobs:
       - name: Lint
         run: deno task lint
       - name: Publish
-        run: deno run -A jsr:@david/publish-on-tag@0.1.4
+        run: deno run -A jsr:@david/publish-on-tag@0.2.0

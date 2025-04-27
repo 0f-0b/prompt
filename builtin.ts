@@ -117,7 +117,7 @@ export const bracketedPasteBegin: Command = async (ctx) => {
     if (c === null) {
       return "cancel";
     }
-    text += c;
+    text += c === "\r" ? "\n" : c;
     if (text.endsWith("\x1b[201~")) {
       text = text.slice(0, -"\x1b[201~".length);
       break;

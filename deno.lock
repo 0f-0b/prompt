@@ -1,15 +1,15 @@
 {
-  "version": "4",
+  "version": "5",
   "specifiers": {
-    "jsr:@std/cli@1": "1.0.11",
-    "jsr:@std/fmt@1": "1.0.4"
+    "jsr:@std/cli@1": "1.0.17",
+    "jsr:@std/fmt@1": "1.0.7"
   },
   "jsr": {
-    "@std/cli@1.0.11": {
-      "integrity": "ec219619fdcd31bcf0d8e53bee1e2706ec9a02f70255365a094f69755dadd340"
+    "@std/cli@1.0.17": {
+      "integrity": "e15b9abe629e17be90cc6216327f03a29eae613365f1353837fa749aad29ce7b"
     },
-    "@std/fmt@1.0.4": {
-      "integrity": "e14fe5bedee26f80877e6705a97a79c7eed599e81bb1669127ef9e8bc1e29a74"
+    "@std/fmt@1.0.7": {
+      "integrity": "2a727c043d8df62cd0b819b3fb709b64dd622e42c3b1bb817ea7e6cc606360fb"
     }
   },
   "workspace": {

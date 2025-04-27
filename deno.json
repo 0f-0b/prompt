@@ -1,6 +1,5 @@
 {
   "name": "@ud2/prompt",
-  "version": "0.0.0",
   "exports": {
     ".": "./mod.ts",
     "./builtin": "./builtin.ts",

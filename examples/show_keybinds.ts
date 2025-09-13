@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run
 
-import { type Command, defaultCommands } from "jsr:@ud2/prompt";
+import { type Command, defaultCommands } from "@ud2/prompt";
 
 const map = new Map<Command, string[]>();
 (function dump(tree, prefix) {

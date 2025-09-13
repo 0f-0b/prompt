@@ -37,6 +37,6 @@ export class TextWriter {
   }
 
   async write(text: string): Promise<undefined> {
-    await this.#writer.write(encoder.encode(text) as Uint8Array<ArrayBuffer>);
+    await this.#writer.write(encoder.encode(text));
   }
 }

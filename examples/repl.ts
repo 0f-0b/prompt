@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run
 
-import { prompt } from "jsr:@ud2/prompt";
-import { DenoPromptEnvironment } from "jsr:@ud2/prompt/env/deno";
+import { prompt } from "@ud2/prompt";
+import { DenoPromptEnvironment } from "@ud2/prompt/env/deno";
 
 const history: string[] = [];
 const env = new DenoPromptEnvironment();

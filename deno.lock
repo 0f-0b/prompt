@@ -1,15 +1,15 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@std/cli@1": "1.0.17",
-    "jsr:@std/fmt@1": "1.0.7"
+    "jsr:@std/cli@1": "1.0.22",
+    "jsr:@std/fmt@1": "1.0.8"
   },
   "jsr": {
-    "@std/cli@1.0.17": {
-      "integrity": "e15b9abe629e17be90cc6216327f03a29eae613365f1353837fa749aad29ce7b"
+    "@std/cli@1.0.22": {
+      "integrity": "50d1e4f87887cb8a8afa29b88505ab5081188f5cad3985460c3b471fa49ff21a"
     },
-    "@std/fmt@1.0.7": {
-      "integrity": "2a727c043d8df62cd0b819b3fb709b64dd622e42c3b1bb817ea7e6cc606360fb"
+    "@std/fmt@1.0.8": {
+      "integrity": "71e1fc498787e4434d213647a6e43e794af4fd393ef8f52062246e06f7e372b7"
     }
   },
   "workspace": {

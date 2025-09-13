@@ -9,7 +9,7 @@ export interface Range {
 export function getGraphemeRange(text: string, position: number): Range {
   const { segment, index } = graphemeSegmenter
     .segment(text.replaceAll("\r", "\n"))
-    .containing(position);
+    .containing(position)!;
   return { start: index, end: index + segment.length };
 }
 
@@ -30,7 +30,7 @@ export function* graphemes(text: string): IteratorObject<string, undefined> {
 export function getPreviousWordRange(text: string, position: number): Range {
   const segments = wordSegmenter.segment(text);
   while (position !== 0) {
-    const { segment, index, isWordLike } = segments.containing(position - 1);
+    const { segment, index, isWordLike } = segments.containing(position - 1)!;
     if (isWordLike) {
       return { start: index, end: index + segment.length };
     }
@@ -42,7 +42,7 @@ export function getPreviousWordRange(text: string, position: number): Range {
 export function getNextWordRange(text: string, position: number): Range {
   const segments = wordSegmenter.segment(text);
   while (position !== text.length) {
-    const { segment, index, isWordLike } = segments.containing(position);
+    const { segment, index, isWordLike } = segments.containing(position)!;
     if (isWordLike) {
       return { start: index, end: index + segment.length };
     }

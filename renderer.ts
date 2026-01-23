@@ -1,23 +1,22 @@
 import type { TextBufferState } from "./buffer.ts";
 import { advanceCursor, wrapCursor } from "./cursor.ts";
 import type { Decorator } from "./decorator.ts";
-import type { PromptEnvironment } from "./env/common.ts";
 
 export class Renderer {
-  readonly #env: PromptEnvironment;
   readonly #decorator: Decorator;
+  readonly #getScreenWidth: () => number;
   #lastLeadingText = "";
   #lastPrefix?: string;
   #lastSuffix?: string;
   #lastState?: TextBufferState;
 
-  constructor(env: PromptEnvironment, decorator: Decorator) {
-    this.#env = env;
+  constructor(decorator: Decorator, getScreenWidth: () => number) {
     this.#decorator = decorator;
+    this.#getScreenWidth = getScreenWidth;
   }
 
   render(prefix: string, suffix: string, state: TextBufferState): string {
-    const columns = this.#env.getScreenWidth();
+    const columns = this.#getScreenWidth();
     return this.#render(prefix, suffix, state, columns);
   }
 
@@ -29,7 +28,7 @@ export class Renderer {
     ) {
       return "";
     }
-    const columns = this.#env.getScreenWidth();
+    const columns = this.#getScreenWidth();
     const reset = this.#reset(columns);
     const render = this.#render(prefix, suffix, state, columns);
     return reset + render;

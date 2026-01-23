@@ -1,12 +1,10 @@
 #!/usr/bin/env -S deno run
 
-import { prompt } from "@ud2/prompt";
-import { DenoPromptEnvironment } from "@ud2/prompt/env/deno";
+import { prompt } from "@ud2/prompt/deno";
 
 const history: string[] = [];
-const env = new DenoPromptEnvironment();
 for (;;) {
-  const result = await prompt(env, { history });
+  const result = await prompt({ history });
   console.log(result);
   if (result.action === "cancel") {
     break;

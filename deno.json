@@ -3,13 +3,17 @@
   "exports": {
     ".": "./mod.ts",
     "./builtin": "./builtin.ts",
-    "./env/deno": "./env/deno.ts"
+    "./deno": "./deno.ts"
   },
   "imports": {
     "@std/cli": "jsr:@std/cli@^1.0.0",
     "@std/fmt": "jsr:@std/fmt@^1.0.0"
   },
   "compilerOptions": {
+    "lib": [
+      "deno.ns",
+      "deno.shared_globals"
+    ],
     "exactOptionalPropertyTypes": true
   },
   "publish": {

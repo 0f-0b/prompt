@@ -35,8 +35,6 @@ import {
   Jobs,
 } from "./command.ts";
 import { ControlCharsDecorator, type Decorator } from "./decorator.ts";
-import type { PromptEnvironment } from "./env/common.ts";
-import { TextReader, TextWriter } from "./io.ts";
 import { Renderer } from "./renderer.ts";
 
 export {
@@ -48,12 +46,9 @@ export {
   DataField,
   type Decorator,
   type Job,
-  type PromptEnvironment,
   type Renderer,
   type TextBuffer,
   type TextBufferState,
-  type TextReader,
-  type TextWriter,
 };
 export const defaultCommands: CommandTree = buildCommandTree({
   "\n" /* ^J */: commit,
@@ -161,74 +156,47 @@ export interface PromptOptions {
   decorator?: Decorator | undefined;
 }
 
-export async function prompt(
-  env: PromptEnvironment,
+export async function* prompt(
+  getScreenWidth: () => number,
   options?: PromptOptions,
-): Promise<PromptResult> {
+): AsyncGenerator<string, [PromptResult, string], string | null> {
   const prompt = options?.prompt ?? "> ";
   const history = options?.history ?? [];
   const commands = options?.commands ?? defaultCommands;
   const decorator = options?.decorator ?? defaultDecorator;
-  const byteReader = env.readable.getReader({ mode: "byob" });
-  try {
-    const byteWriter = env.writable.getWriter();
-    try {
-      env.setRawMode(true);
-      try {
-        const reader = new TextReader(byteReader);
-        const writer = new TextWriter(byteWriter);
-        await writer.write("\x1b[?2004h");
-        try {
-          const decoder = new CommandDecoder(commands);
-          const buffer = new TextBuffer(history);
-          const renderer = new Renderer(env, decorator);
-          const jobs = new Jobs();
-          const ctx = new CommandContext(
-            reader,
-            writer,
-            buffer,
-            renderer,
-            prompt,
-            jobs,
-          );
-          await ctx.draw("\x1b[G" + ctx.prompt);
-          let action: PromptResult["action"];
-          for (;;) {
-            const c = await reader.readCodePoint();
-            if (c === null) {
-              action = "cancel";
-              break;
-            }
-            ctx.lastChar = c;
-            const command = decoder.next(c);
-            if (command === null) {
-              continue;
-            }
-            jobs.thisTick = jobs.nextTick;
-            jobs.nextTick = new Map();
-            const result = await command(ctx);
-            if (result !== "continue") {
-              action = result;
-              break;
-            }
-            for (const job of jobs.thisTick.values()) {
-              await job(ctx);
-            }
-          }
-          const { text } = buffer.state;
-          buffer.replaceText(text.length, text.length, "\n");
-          await ctx.redraw();
-          return action === "cancel" ? { action } : { action, text };
-        } finally {
-          await writer.write("\x1b[?2004l");
-        }
-      } finally {
-        env.setRawMode(false);
-      }
-    } finally {
-      byteWriter.releaseLock();
+  const decoder = new CommandDecoder(commands);
+  const buffer = new TextBuffer(history);
+  const renderer = new Renderer(decorator, getScreenWidth);
+  const jobs = new Jobs();
+  const ctx = new CommandContext(buffer, renderer, prompt, jobs);
+  let action: CommandResult;
+  let output = "\x1b[?2004h\x1b[G" + ctx.draw();
+  for (;;) {
+    const c = yield output;
+    output = "";
+    if (c === null) {
+      action = "cancel";
+      break;
     }
-  } finally {
-    byteReader.releaseLock();
+    ctx.lastChar = c;
+    const command = decoder.next(c);
+    if (command === null) {
+      continue;
+    }
+    jobs.thisTick = jobs.nextTick;
+    jobs.nextTick = new Map();
+    [action, output] = yield* command(ctx);
+    if (action !== "continue") {
+      break;
+    }
+    for (const job of jobs.thisTick.values()) {
+      await job(ctx);
+    }
   }
+  const { text } = buffer.state;
+  buffer.replaceText(text.length, text.length, "\n");
+  return [
+    action === "cancel" ? { action } : { action, text },
+    output + ctx.redraw() + "\x1b[?2004l",
+  ];
 }

@@ -1,121 +1,104 @@
+// deno-lint-ignore-file require-yield
 import type { Command } from "./command.ts";
 import { insertChar } from "./insert_char.ts";
 
-// deno-lint-ignore require-await
-export const commit: Command = async () => "commit";
-// deno-lint-ignore require-await
-export const abort: Command = async () => "abort";
-export const insert: Command = async (ctx) => {
+export const commit: Command = async function* () {
+  return ["commit", ""];
+};
+export const abort: Command = async function* () {
+  return ["abort", ""];
+};
+export const insert: Command = async function* (ctx) {
   insertChar(ctx, ctx.lastChar);
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const deleteBackward: Command = async (ctx) => {
+export const deleteBackward: Command = async function* (ctx) {
   ctx.buffer.deleteBackward();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const deleteForward: Command = async (ctx) => {
+export const deleteForward: Command = async function* (ctx) {
   ctx.buffer.deleteForward();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const deleteForwardOrCancel: Command = async (ctx) => {
+export const deleteForwardOrCancel: Command = async function* (ctx) {
   if (ctx.buffer.state.text.length === 0) {
-    return "cancel";
+    return ["cancel", ""];
   }
   ctx.buffer.deleteForward();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const cutToStart: Command = async (ctx) => {
+export const cutToStart: Command = async function* (ctx) {
   ctx.buffer.cutToStart();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const cutToEnd: Command = async (ctx) => {
+export const cutToEnd: Command = async function* (ctx) {
   ctx.buffer.cutToEnd();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const cutPreviousWord: Command = async (ctx) => {
+export const cutPreviousWord: Command = async function* (ctx) {
   ctx.buffer.cutPreviousWord();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const cutNextWord: Command = async (ctx) => {
+export const cutNextWord: Command = async function* (ctx) {
   ctx.buffer.cutNextWord();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const moveToStart: Command = async (ctx) => {
+export const moveToStart: Command = async function* (ctx) {
   ctx.buffer.moveToStart();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const moveToEnd: Command = async (ctx) => {
+export const moveToEnd: Command = async function* (ctx) {
   ctx.buffer.moveToEnd();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const moveBackward: Command = async (ctx) => {
+export const moveBackward: Command = async function* (ctx) {
   ctx.buffer.moveBackward();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const moveForward: Command = async (ctx) => {
+export const moveForward: Command = async function* (ctx) {
   ctx.buffer.moveForward();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const moveBackwardWord: Command = async (ctx) => {
+export const moveBackwardWord: Command = async function* (ctx) {
   ctx.buffer.moveBackwardWord();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const moveForwardWord: Command = async (ctx) => {
+export const moveForwardWord: Command = async function* (ctx) {
   ctx.buffer.moveForwardWord();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const clearScreen: Command = async (ctx) => {
-  await ctx.draw("\x1b[H" + ctx.prompt);
-  return "continue";
+export const clearScreen: Command = async function* (ctx) {
+  return ["continue", "\x1b[H" + ctx.draw()];
 };
-export const clearDisplay: Command = async (ctx) => {
-  await ctx.draw("\x1b[H\x1b[3J" + ctx.prompt);
-  return "continue";
+export const clearDisplay: Command = async function* (ctx) {
+  return ["continue", "\x1b[H\x1b[3J" + ctx.draw()];
 };
-export const nextHistory: Command = async (ctx) => {
+export const nextHistory: Command = async function* (ctx) {
   ctx.buffer.nextHistory();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const previousHistory: Command = async (ctx) => {
+export const previousHistory: Command = async function* (ctx) {
   ctx.buffer.previousHistory();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const undo: Command = async (ctx) => {
+export const undo: Command = async function* (ctx) {
   ctx.buffer.restoreState();
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const quotedInsert: Command = async (ctx) => {
-  const c = await ctx.reader.readCodePoint();
+export const quotedInsert: Command = async function* (ctx) {
+  const c = yield "";
   if (c === null) {
-    return "cancel";
+    return ["cancel", ""];
   }
   insertChar(ctx, c);
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };
-export const bracketedPasteBegin: Command = async (ctx) => {
+export const bracketedPasteBegin: Command = async function* (ctx) {
   let text = "";
   for (;;) {
-    const c = await ctx.reader.readCodePoint();
+    const c = yield "";
     if (c === null) {
-      return "cancel";
+      return ["cancel", ""];
     }
     text += c === "\r" ? "\n" : c;
     if (text.endsWith("\x1b[201~")) {
@@ -125,6 +108,5 @@ export const bracketedPasteBegin: Command = async (ctx) => {
   }
   ctx.buffer.saveState();
   ctx.buffer.insertText(text);
-  await ctx.redraw();
-  return "continue";
+  return ["continue", ctx.redraw()];
 };

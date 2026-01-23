@@ -1,6 +1,5 @@
 import type { TextBuffer } from "./buffer.ts";
 import { insert } from "./builtin.ts";
-import type { TextReader, TextWriter } from "./io.ts";
 import type { Renderer } from "./renderer.ts";
 
 export class DataField<in out T> {
@@ -20,41 +19,31 @@ export class Jobs {
 }
 
 export class CommandContext {
-  readonly reader: TextReader;
-  readonly writer: TextWriter;
   readonly buffer: TextBuffer;
   readonly renderer: Renderer;
   prompt: string;
   lastChar = "";
-  #data = new Map<symbol, unknown>();
-  #jobs: Jobs;
+  readonly #data = new Map<symbol, unknown>();
+  readonly #jobs: Jobs;
 
   constructor(
-    reader: TextReader,
-    writer: TextWriter,
     buffer: TextBuffer,
     renderer: Renderer,
     prompt: string,
     jobs: Jobs,
   ) {
-    this.reader = reader;
-    this.writer = writer;
     this.buffer = buffer;
     this.renderer = renderer;
     this.prompt = prompt;
     this.#jobs = jobs;
   }
 
-  async draw(prefix = this.prompt, suffix = ""): Promise<undefined> {
-    await this.writer.write(
-      this.renderer.render(prefix, suffix, this.buffer.state),
-    );
+  draw(prefix = this.prompt, suffix = ""): string {
+    return this.renderer.render(prefix, suffix, this.buffer.state);
   }
 
-  async redraw(prefix = this.prompt, suffix = ""): Promise<undefined> {
-    await this.writer.write(
-      this.renderer.update(prefix, suffix, this.buffer.state),
-    );
+  redraw(prefix = this.prompt, suffix = ""): string {
+    return this.renderer.update(prefix, suffix, this.buffer.state);
   }
 
   get<T>(field: DataField<T>): T {
@@ -82,7 +71,9 @@ export class CommandContext {
 }
 
 export type CommandResult = "continue" | "commit" | "cancel" | "abort";
-export type Command = (ctx: CommandContext) => Promise<CommandResult>;
+export type Command = (
+  ctx: CommandContext,
+) => AsyncGenerator<string, [CommandResult, string], string | null>;
 
 export interface CommandTree {
   readonly [codePoint: string]: Command | CommandTree;

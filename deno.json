@@ -10,27 +10,19 @@
     "@std/fmt": "jsr:@std/fmt@^1.0.0"
   },
   "compilerOptions": {
-    "lib": [
-      "deno.ns",
-      "deno.shared_globals"
-    ],
+    "lib": ["deno.ns", "deno.shared_globals"],
     "exactOptionalPropertyTypes": true
   },
   "publish": {
-    "exclude": [
-      ".github",
-      "deno.lock"
-    ]
+    "exclude": [".github", "deno.lock"]
   },
   "lint": {
     "rules": {
-      "exclude": [
-        "no-invalid-regexp"
-      ]
+      "exclude": ["no-invalid-regexp"]
     }
   },
   "tasks": {
     "cache": "deno cache --allow-import=jsr.io:443 examples/repl.ts examples/show_keybinds.ts",
-    "lint": "deno fmt --check && deno lint && deno check --all --allow-import=jsr.io:443 examples/repl.ts && deno check --all --allow-import=jsr.io:443 examples/show_keybinds.ts"
+    "lint": "deno fmt --check && deno lint --allow-import=jsr.io:443 && deno check --allow-import=jsr.io:443 examples/repl.ts && deno check --allow-import=jsr.io:443 examples/show_keybinds.ts"
   }
 }

@@ -2,7 +2,7 @@ import {
   prompt as impl,
   type PromptOptions,
   type PromptResult,
-} from "@ud2/prompt";
+} from "./mod.ts";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder(undefined, { ignoreBOM: true });
